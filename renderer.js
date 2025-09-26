@@ -28,6 +28,9 @@ const tableEl = document.getElementById('table');
 // 상태 변수
 let isProcessing = false;
 let currentOutputPath = '';
+const electronAPI = window.electronAPI ?? null;
+const isElectronEnvironment = Boolean(electronAPI);
+let electronWarningShown = false;
 
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,31 +44,46 @@ function setupEventListeners() {
     selectFileBtn.addEventListener('click', selectFile);
     selectFolderBtn.addEventListener('click', selectFolder);
     selectOutputBtn.addEventListener('click', selectOutputDir);
-    
+
     // 제어 버튼들
     startBtn.addEventListener('click', startProcessing);
     stopBtn.addEventListener('click', stopProcessing);
     clearBtn.addEventListener('click', clearLog);
     openOutputBtn.addEventListener('click', openOutputFolder);
     scrollToBottomBtn.addEventListener('click', scrollToBottom);
-    
+
     // 입력 경로 변경 감지
     inputPathEl.addEventListener('input', validateInputPath);
-    
-    // MinerU 출력 이벤트
-    window.electronAPI.onMinerUOutput((event, data) => {
-        addLogEntry('info', data.trim());
-    });
-    
-    window.electronAPI.onMinerUError((event, data) => {
-        addLogEntry('error', data.trim());
-    });
+
+    if (!isElectronEnvironment) {
+        handleMissingElectronEnvironment('이벤트 리스너 초기화');
+        return;
+    }
+
+    const onMinerUOutput = ensureElectronMethod('onMinerUOutput');
+    if (onMinerUOutput) {
+        onMinerUOutput((event, data) => {
+            addLogEntry('info', data.trim());
+        });
+    }
+
+    const onMinerUError = ensureElectronMethod('onMinerUError');
+    if (onMinerUError) {
+        onMinerUError((event, data) => {
+            addLogEntry('error', data.trim());
+        });
+    }
 }
 
 // 파일 선택
 async function selectFile() {
+    const selectFileFn = ensureElectronMethod('selectFile');
+    if (!selectFileFn) {
+        return;
+    }
+
     try {
-        const filePath = await window.electronAPI.selectFile();
+        const filePath = await selectFileFn();
         if (filePath) {
             inputPathEl.value = filePath;
             await validateInputPath();
@@ -77,8 +95,13 @@ async function selectFile() {
 
 // 폴더 선택
 async function selectFolder() {
+    const selectFolderFn = ensureElectronMethod('selectFolder');
+    if (!selectFolderFn) {
+        return;
+    }
+
     try {
-        const folderPath = await window.electronAPI.selectFolder();
+        const folderPath = await selectFolderFn();
         if (folderPath) {
             inputPathEl.value = folderPath;
             await validateInputPath();
@@ -90,8 +113,13 @@ async function selectFolder() {
 
 // 출력 디렉토리 선택
 async function selectOutputDir() {
+    const selectOutputDirFn = ensureElectronMethod('selectOutputDir');
+    if (!selectOutputDirFn) {
+        return;
+    }
+
     try {
-        const outputPath = await window.electronAPI.selectOutputDir();
+        const outputPath = await selectOutputDirFn();
         if (outputPath) {
             outputPathEl.value = outputPath;
             currentOutputPath = outputPath;
@@ -109,9 +137,14 @@ async function validateInputPath() {
         updateFileStatus('info', '지원 형식: PDF, PNG, JPG, JPEG');
         return;
     }
-    
+
+    const checkFileExistsFn = ensureElectronMethod('checkFileExists');
+    if (!checkFileExistsFn) {
+        return;
+    }
+
     try {
-        const fileInfo = await window.electronAPI.checkFileExists(inputPath);
+        const fileInfo = await checkFileExistsFn(inputPath);
         
         if (fileInfo.exists) {
             if (fileInfo.isFile) {
@@ -147,31 +180,41 @@ function updateFileStatus(type, message) {
 async function startProcessing() {
     const inputPath = inputPathEl.value.trim();
     const outputPath = outputPathEl.value.trim();
-    
+
     if (!inputPath) {
         addLogEntry('error', '입력 파일/폴더를 선택해주세요.');
         return;
     }
-    
+
     if (!outputPath) {
         addLogEntry('error', '출력 디렉토리를 선택해주세요.');
         return;
     }
-    
+
+    const checkFileExistsFn = ensureElectronMethod('checkFileExists');
+    if (!checkFileExistsFn) {
+        return;
+    }
+
     // 파일 존재 여부 확인
-    const fileInfo = await window.electronAPI.checkFileExists(inputPath);
+    const fileInfo = await checkFileExistsFn(inputPath);
     if (!fileInfo.exists) {
         addLogEntry('error', '입력 파일/폴더가 존재하지 않습니다.');
         return;
     }
-    
+
+    const runMinerUFn = ensureElectronMethod('runMinerU');
+    if (!runMinerUFn) {
+        return;
+    }
+
     // UI 상태 변경
     isProcessing = true;
     startBtn.disabled = true;
     stopBtn.disabled = false;
     progressSectionEl.style.display = 'block';
     loadingOverlayEl.style.display = 'flex';
-    
+
     // 옵션 수집
     const options = {
         inputPath,
@@ -189,7 +232,7 @@ async function startProcessing() {
     addLogEntry('info', `옵션: ${JSON.stringify(options, null, 2)}`);
     
     try {
-        const result = await window.electronAPI.runMinerU(options);
+        const result = await runMinerUFn(options);
         
         if (result.success) {
             addLogEntry('success', '✓ OCR 처리가 성공적으로 완료되었습니다!');
@@ -212,8 +255,13 @@ async function startProcessing() {
 
 // OCR 처리 중지
 async function stopProcessing() {
+    const stopMinerUFn = ensureElectronMethod('stopMinerU');
+    if (!stopMinerUFn) {
+        return;
+    }
+
     try {
-        const stopped = await window.electronAPI.stopMinerU();
+        const stopped = await stopMinerUFn();
         if (stopped) {
             addLogEntry('warning', '처리가 중지되었습니다.');
         }
@@ -235,8 +283,13 @@ function clearLog() {
 // 출력 폴더 열기
 async function openOutputFolder() {
     if (currentOutputPath) {
+        const openOutputFolderFn = ensureElectronMethod('openOutputFolder');
+        if (!openOutputFolderFn) {
+            return;
+        }
+
         try {
-            await window.electronAPI.openOutputFolder(currentOutputPath);
+            await openOutputFolderFn(currentOutputPath);
         } catch (error) {
             addLogEntry('error', `폴더 열기 오류: ${error.message}`);
         }
@@ -260,6 +313,40 @@ function addLogEntry(type, message) {
     
     logContentEl.appendChild(logEntry);
     logContentEl.scrollTop = logContentEl.scrollHeight;
+}
+
+function ensureElectronMethod(methodName) {
+    if (!isElectronEnvironment) {
+        handleMissingElectronEnvironment(methodName);
+        return null;
+    }
+
+    const method = electronAPI?.[methodName];
+    if (typeof method !== 'function') {
+        console.error(`[MinerU] electronAPI.${methodName} is not available.`);
+        handleMissingElectronEnvironment(methodName);
+        return null;
+    }
+
+    return method.bind(electronAPI);
+}
+
+function handleMissingElectronEnvironment(context = '') {
+    if (!electronWarningShown) {
+        const contextInfo = context ? ` (필요 기능: ${context})` : '';
+        addLogEntry('error', `Electron API를 사용할 수 없습니다${contextInfo}. 앱을 Electron 환경에서 실행해주세요 (예: npm start).`);
+        updateFileStatus('error', 'Electron 환경에서 실행된 경우에만 파일을 선택할 수 있습니다.');
+        electronWarningShown = true;
+    }
+    disableElectronOnlyControls();
+}
+
+function disableElectronOnlyControls() {
+    [selectFileBtn, selectFolderBtn, selectOutputBtn, startBtn, stopBtn, openOutputBtn].forEach((btn) => {
+        if (btn) {
+            btn.disabled = true;
+        }
+    });
 }
 
 // 진행상황 업데이트
