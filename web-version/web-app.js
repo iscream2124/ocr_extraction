@@ -10,16 +10,50 @@ class MinerUWebApp {
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
-        uploadArea.addEventListener('drop', this.handleDrop.bind(this));
-        fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+        if (uploadArea && fileInput) {
+            uploadArea.addEventListener('click', () => {
+                console.log('Upload area clicked');
+                fileInput.click();
+            });
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('drag-over');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('drag-over');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('drag-over');
+                const files = Array.from(e.dataTransfer.files);
+                console.log('Files dropped:', files);
+                this.addFiles(files);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                console.log('File input changed:', e.target.files);
+                const files = Array.from(e.target.files);
+                this.addFiles(files);
+            });
+        }
 
         // 버튼 이벤트
-        document.getElementById('processBtn').addEventListener('click', this.processFiles.bind(this));
-        document.getElementById('clearBtn').addEventListener('click', this.clearFiles.bind(this));
-        document.getElementById('downloadBtn').addEventListener('click', this.downloadResult.bind(this));
-        document.getElementById('copyBtn').addEventListener('click', this.copyResult.bind(this));
+        const processBtn = document.getElementById('processBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        
+        if (processBtn) processBtn.addEventListener('click', this.processFiles.bind(this));
+        if (clearBtn) clearBtn.addEventListener('click', this.clearFiles.bind(this));
+        if (downloadBtn) downloadBtn.addEventListener('click', this.downloadResult.bind(this));
+        if (copyBtn) copyBtn.addEventListener('click', this.copyResult.bind(this));
     }
 
     handleDragOver(e) {
@@ -39,29 +73,73 @@ class MinerUWebApp {
         this.addFiles(files);
     }
 
-    addFiles(files) {
+    isValidFile(file) {
         const supportedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+        return supportedTypes.includes(file.type);
+    }
+
+    addFiles(files) {
+        console.log('Adding files:', files);
+        let addedCount = 0;
         
         files.forEach(file => {
-            if (supportedTypes.includes(file.type)) {
-                this.uploadedFiles.push(file);
-                this.updateFileList();
+            console.log('Processing file:', file.name, 'Type:', file.type);
+            
+            if (this.isValidFile(file)) {
+                // 중복 파일 체크
+                const isDuplicate = this.uploadedFiles.some(existingFile => 
+                    existingFile.name === file.name && existingFile.size === file.size
+                );
+                
+                if (!isDuplicate) {
+                    this.uploadedFiles.push(file);
+                    addedCount++;
+                    console.log('File added:', file.name);
+                } else {
+                    console.log('Duplicate file skipped:', file.name);
+                    this.showMessage(`중복 파일: ${file.name}`, 'warning');
+                }
             } else {
+                console.log('Invalid file type:', file.name, file.type);
                 this.showMessage(`지원되지 않는 파일 형식: ${file.name}`, 'error');
             }
         });
+        
+        if (addedCount > 0) {
+            this.updateFileList();
+            this.showMessage(`${addedCount}개 파일이 추가되었습니다.`, 'success');
+        }
     }
 
     updateFileList() {
         const fileList = document.getElementById('fileList');
+        if (!fileList) {
+            console.error('File list element not found');
+            return;
+        }
+        
         fileList.innerHTML = '';
+
+        if (this.uploadedFiles.length === 0) {
+            fileList.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">업로드된 파일이 없습니다.</p>';
+            return;
+        }
 
         this.uploadedFiles.forEach((file, index) => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
+            
+            // 파일 타입에 따른 아이콘 설정
+            let fileIcon = 'fas fa-file';
+            if (file.type === 'application/pdf') {
+                fileIcon = 'fas fa-file-pdf';
+            } else if (file.type.startsWith('image/')) {
+                fileIcon = 'fas fa-file-image';
+            }
+            
             fileItem.innerHTML = `
                 <div class="file-info">
-                    <i class="fas fa-file"></i>
+                    <i class="${fileIcon}"></i>
                     <span>${file.name}</span>
                     <span class="file-size">(${this.formatFileSize(file.size)})</span>
                 </div>
@@ -71,6 +149,8 @@ class MinerUWebApp {
             `;
             fileList.appendChild(fileItem);
         });
+        
+        console.log('File list updated with', this.uploadedFiles.length, 'files');
     }
 
     removeFile(index) {
