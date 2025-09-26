@@ -28,8 +28,6 @@ const tableEl = document.getElementById('table');
 // 상태 변수
 let isProcessing = false;
 let currentOutputPath = '';
-const electronAPI = window.electronAPI ?? null;
-const isElectronEnvironment = Boolean(electronAPI);
 let electronWarningShown = false;
 
 // 초기화
@@ -55,7 +53,7 @@ function setupEventListeners() {
     // 입력 경로 변경 감지
     inputPathEl.addEventListener('input', validateInputPath);
 
-    if (!isElectronEnvironment) {
+    if (!hasElectronAPI()) {
         handleMissingElectronEnvironment('이벤트 리스너 초기화');
         return;
     }
@@ -315,20 +313,29 @@ function addLogEntry(type, message) {
     logContentEl.scrollTop = logContentEl.scrollHeight;
 }
 
+function getElectronAPI() {
+    return window.electronAPI ?? null;
+}
+
+function hasElectronAPI() {
+    return Boolean(getElectronAPI());
+}
+
 function ensureElectronMethod(methodName) {
-    if (!isElectronEnvironment) {
+    const api = getElectronAPI();
+    if (!api) {
         handleMissingElectronEnvironment(methodName);
         return null;
     }
 
-    const method = electronAPI?.[methodName];
+    const method = api?.[methodName];
     if (typeof method !== 'function') {
         console.error(`[MinerU] electronAPI.${methodName} is not available.`);
         handleMissingElectronEnvironment(methodName);
         return null;
     }
 
-    return method.bind(electronAPI);
+    return method.bind(api);
 }
 
 function handleMissingElectronEnvironment(context = '') {
