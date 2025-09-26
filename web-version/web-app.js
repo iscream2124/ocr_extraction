@@ -79,6 +79,7 @@ class MinerUWebApp {
         const clearBtn = document.getElementById('clearBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const copyBtn = document.getElementById('copyBtn');
+        const selectFileBtn = document.getElementById('selectFileBtn');
         
         if (processBtn) {
             processBtn.addEventListener('click', () => this.processFiles());
@@ -98,6 +99,14 @@ class MinerUWebApp {
         if (copyBtn) {
             copyBtn.addEventListener('click', () => this.copyResult());
             console.log('복사 버튼 이벤트 설정');
+        }
+        
+        if (selectFileBtn) {
+            selectFileBtn.addEventListener('click', () => {
+                console.log('파일 선택 버튼 클릭됨');
+                fileInput.click();
+            });
+            console.log('파일 선택 버튼 이벤트 설정');
         }
         
         console.log('모든 이벤트 리스너 설정 완료');
