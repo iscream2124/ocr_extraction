@@ -17,9 +17,11 @@ class MinerUWebApp {
         // 파일 업로드 영역
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const folderInput = document.getElementById('folderInput');
         
         console.log('Upload area:', uploadArea);
         console.log('File input:', fileInput);
+        console.log('Folder input:', folderInput);
         
         if (uploadArea && fileInput) {
             // 클릭 이벤트
@@ -72,6 +74,15 @@ class MinerUWebApp {
             console.log('파일 업로드 이벤트 리스너 설정 완료');
         } else {
             console.error('업로드 영역 또는 파일 입력 요소를 찾을 수 없습니다!');
+        }
+        
+        // 폴더 입력 이벤트
+        if (folderInput) {
+            folderInput.addEventListener('change', (e) => {
+                console.log('Folder input changed:', e.target.files);
+                this.handleFiles(Array.from(e.target.files));
+            });
+            console.log('폴더 입력 이벤트 리스너 설정 완료');
         }
 
         // 버튼 이벤트
@@ -329,6 +340,39 @@ class MinerUWebApp {
         }, 3000);
     }
 }
+
+// 전역 함수들 정의 (오류 방지용)
+window.selectFile = function() {
+    console.log('selectFile 함수 호출됨 (웹 버전)');
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.click();
+    } else {
+        console.error('fileInput 요소를 찾을 수 없습니다');
+    }
+};
+
+window.selectFolder = function() {
+    console.log('selectFolder 함수 호출됨 (웹 버전)');
+    const folderInput = document.getElementById('folderInput');
+    if (folderInput) {
+        folderInput.click();
+    } else {
+        console.error('folderInput 요소를 찾을 수 없습니다');
+    }
+};
+
+window.selectOutputDir = function() {
+    console.log('selectOutputDir 함수 호출됨 (웹 버전)');
+    // 웹 버전에서는 출력 폴더 선택을 지원하지 않음
+    alert('웹 버전에서는 출력 폴더 선택을 지원하지 않습니다. 결과는 브라우저에서 다운로드됩니다.');
+};
+
+window.validateInputPath = function() {
+    console.log('validateInputPath 함수 호출됨 (웹 버전)');
+    // 웹 버전에서는 파일 경로 검증이 다르게 처리됨
+    return Promise.resolve();
+};
 
 // DOM이 로드된 후 앱 초기화
 document.addEventListener('DOMContentLoaded', () => {

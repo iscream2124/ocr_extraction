@@ -39,12 +39,16 @@
                         </p>
                     </div>
                     <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;">
+                    <input type="file" id="folderInput" webkitdirectory multiple accept=".pdf,.png,.jpg,.jpeg" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;">
                     <div class="file-list" id="fileList"></div>
                     
                     <!-- 추가 파일 선택 버튼 -->
                     <div style="margin-top: 1rem; text-align: center;">
-                        <button id="selectFileBtn" class="btn btn-primary">
+                        <button id="selectFileBtn" class="btn btn-primary" onclick="selectFile()">
                             <i class="fas fa-file"></i> 파일 선택
+                        </button>
+                        <button id="selectFolderBtn" class="btn btn-secondary" onclick="selectFolder()" style="margin-left: 0.5rem;">
+                            <i class="fas fa-folder"></i> 폴더 선택
                         </button>
                     </div>
                 </div>
