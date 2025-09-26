@@ -30,15 +30,15 @@
                     <h2><i class="fas fa-cloud-upload-alt"></i> 파일 업로드</h2>
                 </div>
                 <div class="file-upload-container">
-                    <div class="upload-area" id="uploadArea">
+                    <div class="upload-area" id="uploadArea" tabindex="0">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p><strong>파일을 드래그하거나 클릭하여 업로드하세요</strong></p>
                         <p class="file-types">지원 형식: PDF, PNG, JPG, JPEG</p>
                         <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
-                            또는 <span style="color: #667eea; text-decoration: underline;">여기를 클릭</span>하여 파일 선택
+                            또는 <span style="color: #667eea; text-decoration: underline; cursor: pointer;">여기를 클릭</span>하여 파일 선택
                         </p>
                     </div>
-                    <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
+                    <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg" style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;">
                     <div class="file-list" id="fileList"></div>
                 </div>
             </section>

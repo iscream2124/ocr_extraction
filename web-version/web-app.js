@@ -1,47 +1,77 @@
-// 웹 버전 MinerU OCR 앱
 class MinerUWebApp {
     constructor() {
         this.uploadedFiles = [];
+        this.init();
+    }
+
+    init() {
+        console.log('MinerU Web App 초기화 중...');
         this.setupEventListeners();
+        this.updateFileList();
+        console.log('MinerU Web App 초기화 완료');
     }
 
     setupEventListeners() {
-        // 파일 업로드
+        console.log('이벤트 리스너 설정 중...');
+        
+        // 파일 업로드 영역
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         
+        console.log('Upload area:', uploadArea);
+        console.log('File input:', fileInput);
+        
         if (uploadArea && fileInput) {
-            uploadArea.addEventListener('click', () => {
-                console.log('Upload area clicked');
+            // 클릭 이벤트
+            uploadArea.addEventListener('click', (e) => {
+                console.log('Upload area clicked!');
+                e.preventDefault();
                 fileInput.click();
             });
             
+            // 키보드 이벤트 (Enter, Space)
+            uploadArea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    console.log('Upload area key pressed:', e.key);
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+            
+            // 드래그 오버 이벤트
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 uploadArea.classList.add('drag-over');
+                console.log('Drag over');
             });
             
+            // 드래그 리브 이벤트
             uploadArea.addEventListener('dragleave', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 uploadArea.classList.remove('drag-over');
+                console.log('Drag leave');
             });
             
+            // 드롭 이벤트
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 uploadArea.classList.remove('drag-over');
-                const files = Array.from(e.dataTransfer.files);
-                console.log('Files dropped:', files);
-                this.addFiles(files);
+                console.log('Files dropped:', e.dataTransfer.files);
+                this.handleFiles(Array.from(e.dataTransfer.files));
             });
             
+            // 파일 입력 변경 이벤트
             fileInput.addEventListener('change', (e) => {
                 console.log('File input changed:', e.target.files);
-                const files = Array.from(e.target.files);
-                this.addFiles(files);
+                this.handleFiles(Array.from(e.target.files));
             });
+            
+            console.log('파일 업로드 이벤트 리스너 설정 완료');
+        } else {
+            console.error('업로드 영역 또는 파일 입력 요소를 찾을 수 없습니다!');
         }
 
         // 버튼 이벤트
@@ -50,43 +80,45 @@ class MinerUWebApp {
         const downloadBtn = document.getElementById('downloadBtn');
         const copyBtn = document.getElementById('copyBtn');
         
-        if (processBtn) processBtn.addEventListener('click', this.processFiles.bind(this));
-        if (clearBtn) clearBtn.addEventListener('click', this.clearFiles.bind(this));
-        if (downloadBtn) downloadBtn.addEventListener('click', this.downloadResult.bind(this));
-        if (copyBtn) copyBtn.addEventListener('click', this.copyResult.bind(this));
+        if (processBtn) {
+            processBtn.addEventListener('click', () => this.processFiles());
+            console.log('처리 버튼 이벤트 설정');
+        }
+        
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.clearFiles());
+            console.log('초기화 버튼 이벤트 설정');
+        }
+        
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => this.downloadResult());
+            console.log('다운로드 버튼 이벤트 설정');
+        }
+        
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyResult());
+            console.log('복사 버튼 이벤트 설정');
+        }
+        
+        console.log('모든 이벤트 리스너 설정 완료');
     }
 
-    handleDragOver(e) {
-        e.preventDefault();
-        e.currentTarget.classList.add('drag-over');
-    }
+    handleFiles(files) {
+        console.log('파일 처리 시작:', files);
+        
+        if (!files || files.length === 0) {
+            console.log('처리할 파일이 없습니다');
+            return;
+        }
 
-    handleDrop(e) {
-        e.preventDefault();
-        e.currentTarget.classList.remove('drag-over');
-        const files = Array.from(e.dataTransfer.files);
-        this.addFiles(files);
-    }
-
-    handleFileSelect(e) {
-        const files = Array.from(e.target.files);
-        this.addFiles(files);
-    }
-
-    isValidFile(file) {
-        const supportedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-        return supportedTypes.includes(file.type);
-    }
-
-    addFiles(files) {
-        console.log('Adding files:', files);
         let addedCount = 0;
+        const supportedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
         
         files.forEach(file => {
-            console.log('Processing file:', file.name, 'Type:', file.type);
+            console.log('파일 처리 중:', file.name, '타입:', file.type);
             
             if (this.isValidFile(file)) {
-                // 중복 파일 체크
+                // 중복 체크
                 const isDuplicate = this.uploadedFiles.some(existingFile => 
                     existingFile.name === file.name && existingFile.size === file.size
                 );
@@ -94,13 +126,13 @@ class MinerUWebApp {
                 if (!isDuplicate) {
                     this.uploadedFiles.push(file);
                     addedCount++;
-                    console.log('File added:', file.name);
+                    console.log('파일 추가됨:', file.name);
                 } else {
-                    console.log('Duplicate file skipped:', file.name);
+                    console.log('중복 파일 건너뜀:', file.name);
                     this.showMessage(`중복 파일: ${file.name}`, 'warning');
                 }
             } else {
-                console.log('Invalid file type:', file.name, file.type);
+                console.log('지원되지 않는 파일 형식:', file.name, file.type);
                 this.showMessage(`지원되지 않는 파일 형식: ${file.name}`, 'error');
             }
         });
@@ -111,12 +143,19 @@ class MinerUWebApp {
         }
     }
 
+    isValidFile(file) {
+        const supportedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+        return supportedTypes.includes(file.type);
+    }
+
     updateFileList() {
         const fileList = document.getElementById('fileList');
         if (!fileList) {
-            console.error('File list element not found');
+            console.error('파일 목록 요소를 찾을 수 없습니다!');
             return;
         }
+        
+        console.log('파일 목록 업데이트 중...', this.uploadedFiles.length, '개 파일');
         
         fileList.innerHTML = '';
 
@@ -129,7 +168,7 @@ class MinerUWebApp {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             
-            // 파일 타입에 따른 아이콘 설정
+            // 파일 타입별 아이콘
             let fileIcon = 'fas fa-file';
             if (file.type === 'application/pdf') {
                 fileIcon = 'fas fa-file-pdf';
@@ -150,18 +189,84 @@ class MinerUWebApp {
             fileList.appendChild(fileItem);
         });
         
-        console.log('File list updated with', this.uploadedFiles.length, 'files');
+        console.log('파일 목록 업데이트 완료');
     }
 
     removeFile(index) {
-        this.uploadedFiles.splice(index, 1);
-        this.updateFileList();
+        console.log('파일 제거:', index);
+        if (index >= 0 && index < this.uploadedFiles.length) {
+            const removedFile = this.uploadedFiles.splice(index, 1)[0];
+            this.updateFileList();
+            this.showMessage(`파일 제거됨: ${removedFile.name}`, 'info');
+        }
     }
 
     clearFiles() {
+        console.log('모든 파일 초기화');
         this.uploadedFiles = [];
         this.updateFileList();
         document.getElementById('resultSection').style.display = 'none';
+        this.showMessage('모든 파일이 초기화되었습니다.', 'info');
+    }
+
+    processFiles() {
+        console.log('파일 처리 시작');
+        
+        if (this.uploadedFiles.length === 0) {
+            this.showMessage('처리할 파일을 선택해주세요.', 'warning');
+            return;
+        }
+
+        this.showMessage('파일 처리를 시작합니다...', 'info');
+        
+        // 실제 처리 로직은 여기에 구현
+        // 현재는 시뮬레이션
+        setTimeout(() => {
+            this.showMessage('처리가 완료되었습니다! (시뮬레이션)', 'success');
+            this.showResult('처리된 텍스트 결과가 여기에 표시됩니다.\n\n이것은 시뮬레이션 결과입니다.');
+        }, 2000);
+    }
+
+    showResult(text) {
+        const resultSection = document.getElementById('resultSection');
+        const resultText = document.getElementById('resultText');
+        
+        if (resultSection && resultText) {
+            resultText.value = text;
+            resultSection.style.display = 'block';
+        }
+    }
+
+    downloadResult() {
+        const resultText = document.getElementById('resultText');
+        if (!resultText || !resultText.value) {
+            this.showMessage('다운로드할 결과가 없습니다.', 'warning');
+            return;
+        }
+
+        const blob = new Blob([resultText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ocr_result.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showMessage('결과가 다운로드되었습니다.', 'success');
+    }
+
+    copyResult() {
+        const resultText = document.getElementById('resultText');
+        if (!resultText || !resultText.value) {
+            this.showMessage('복사할 결과가 없습니다.', 'warning');
+            return;
+        }
+
+        resultText.select();
+        document.execCommand('copy');
+        this.showMessage('결과가 클립보드에 복사되었습니다.', 'success');
     }
 
     formatFileSize(bytes) {
@@ -172,109 +277,53 @@ class MinerUWebApp {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    async processFiles() {
-        if (this.uploadedFiles.length === 0) {
-            this.showMessage('파일을 먼저 업로드해주세요.', 'warning');
-            return;
-        }
-
-        // UI 상태 변경
-        document.getElementById('processBtn').disabled = true;
-        document.getElementById('progressSection').style.display = 'block';
-        document.getElementById('loadingOverlay').style.display = 'flex';
-
-        try {
-            // FormData 생성
-            const formData = new FormData();
-            this.uploadedFiles.forEach(file => {
-                formData.append('files', file);
-            });
-
-            // 옵션 추가
-            formData.append('method', document.getElementById('method').value);
-            formData.append('language', document.getElementById('language').value);
-            formData.append('formula', document.getElementById('formula').checked);
-            formData.append('table', document.getElementById('table').checked);
-
-            // 서버로 전송 (실제 구현에서는 백엔드 API 필요)
-            const result = await this.sendToServer(formData);
-            
-            if (result.success) {
-                this.showResult(result.text);
-                this.showMessage('OCR 처리가 완료되었습니다!', 'success');
-            } else {
-                this.showMessage(`처리 실패: ${result.error}`, 'error');
-            }
-        } catch (error) {
-            this.showMessage(`오류 발생: ${error.message}`, 'error');
-        } finally {
-            // UI 상태 복원
-            document.getElementById('processBtn').disabled = false;
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-    }
-
-    async sendToServer(formData) {
-        // 실제 구현에서는 백엔드 API 엔드포인트로 전송
-        // 여기서는 시뮬레이션
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    success: true,
-                    text: `추출된 텍스트:\n\n${this.uploadedFiles.map(f => f.name).join(', ')} 파일에서 텍스트를 추출했습니다.\n\n이것은 데모 결과입니다. 실제 구현에서는 MinerU 백엔드가 필요합니다.`
-                });
-            }, 3000);
-        });
-    }
-
-    showResult(text) {
-        document.getElementById('resultText').textContent = text;
-        document.getElementById('resultSection').style.display = 'block';
-        this.extractedText = text;
-    }
-
-    downloadResult() {
-        if (!this.extractedText) return;
-
-        const blob = new Blob([this.extractedText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'extracted_text.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    copyResult() {
-        if (!this.extractedText) return;
-
-        navigator.clipboard.writeText(this.extractedText).then(() => {
-            this.showMessage('텍스트가 클립보드에 복사되었습니다.', 'success');
-        }).catch(() => {
-            this.showMessage('복사에 실패했습니다.', 'error');
-        });
-    }
-
     showMessage(message, type = 'info') {
-        // 간단한 알림 구현
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        
+        // 간단한 알림 표시 (실제 구현에서는 더 나은 UI 사용)
         const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 1rem;
+            padding: 12px 20px;
             border-radius: 8px;
             color: white;
+            font-weight: bold;
             z-index: 1000;
-            background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+            max-width: 300px;
+            word-wrap: break-word;
         `;
         
+        switch (type) {
+            case 'success':
+                notification.style.backgroundColor = '#28a745';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#dc3545';
+                break;
+            case 'warning':
+                notification.style.backgroundColor = '#ffc107';
+                notification.style.color = '#000';
+                break;
+            default:
+                notification.style.backgroundColor = '#17a2b8';
+        }
+        
+        notification.textContent = message;
         document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
     }
 }
 
-// 앱 초기화
-const app = new MinerUWebApp();
+// DOM이 로드된 후 앱 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM 로드 완료, 앱 초기화 시작');
+    window.app = new MinerUWebApp();
+    console.log('앱 초기화 완료, window.app:', window.app);
+});
