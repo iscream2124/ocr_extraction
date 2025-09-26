@@ -1,3 +1,8 @@
+// 웹 환경 확인
+if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('이 애플리케이션은 웹 브라우저 환경에서만 실행할 수 있습니다.');
+}
+
 class MinerUWebApp {
     constructor() {
         this.uploadedFiles = [];
@@ -400,13 +405,33 @@ class MinerUWebApp {
     console.log('전역 함수 정의 완료');
 })();
 
-// Electron API 사용 방지
-if (typeof window !== 'undefined' && window.require) {
-    console.warn('Electron 환경이 감지되었습니다. 웹 버전에서는 Electron API를 사용할 수 없습니다.');
-    // Electron API를 비활성화
-    window.require = undefined;
-    window.electron = undefined;
-}
+// Electron API 완전 차단
+(function() {
+    // Electron API를 완전히 차단
+    if (typeof window !== 'undefined') {
+        // require 함수 차단
+        if (window.require) {
+            window.require = undefined;
+        }
+        
+        // electron 객체 차단
+        if (window.electron) {
+            window.electron = undefined;
+        }
+        
+        // process 객체의 electron 관련 속성 차단
+        if (window.process && window.process.versions && window.process.versions.electron) {
+            window.process.versions.electron = undefined;
+        }
+        
+        // Node.js require 함수 차단
+        if (typeof require !== 'undefined') {
+            window.require = undefined;
+        }
+        
+        console.log('웹 환경에서 Electron API가 차단되었습니다.');
+    }
+})();
 
 // DOM이 로드된 후 앱 초기화
 function initializeApp() {
