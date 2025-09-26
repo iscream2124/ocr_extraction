@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinerU OCR 텍스트 추출 도구</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 헤더 -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-file-pdf"></i>
+                    <h1>MinerU OCR</h1>
+                </div>
+                <div class="header-info">
+                    <span class="version">v1.0.0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 파일 선택 섹션 -->
+            <section class="file-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-folder-open"></i> 입력 파일/폴더</h2>
+                </div>
+                <div class="file-input-container">
+                    <div class="input-group">
+                        <input type="text" id="inputPath" placeholder="파일 경로를 입력하거나 선택하세요..." readonly>
+                        <div class="input-buttons">
+                            <button id="selectFileBtn" class="btn btn-primary">
+                                <i class="fas fa-file"></i> 파일
+                            </button>
+                            <button id="selectFolderBtn" class="btn btn-secondary">
+                                <i class="fas fa-folder"></i> 폴더
+                            </button>
+                        </div>
+                    </div>
+                    <div class="file-info" id="fileInfo">
+                        <div class="file-status" id="fileStatus">
+                            <i class="fas fa-info-circle"></i>
+                            <span>지원 형식: PDF, PNG, JPG, JPEG</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 출력 디렉토리 섹션 -->
+            <section class="output-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-download"></i> 출력 디렉토리</h2>
+                </div>
+                <div class="file-input-container">
+                    <div class="input-group">
+                        <input type="text" id="outputPath" placeholder="출력 디렉토리를 선택하세요..." readonly>
+                        <button id="selectOutputBtn" class="btn btn-primary">
+                            <i class="fas fa-folder-plus"></i> 선택
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 옵션 설정 섹션 -->
+            <section class="options-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cog"></i> 처리 옵션</h2>
+                </div>
+                <div class="options-grid">
+                    <div class="option-group">
+                        <label for="method">처리 방법</label>
+                        <select id="method">
+                            <option value="auto">자동</option>
+                            <option value="txt">텍스트 추출</option>
+                            <option value="ocr">OCR</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="backend">백엔드</label>
+                        <select id="backend">
+                            <option value="pipeline">Pipeline</option>
+                            <option value="vlm-transformers">VLM Transformers</option>
+                            <option value="vlm-vllm-engine">VLM VLLM Engine</option>
+                            <option value="vlm-http-client">VLM HTTP Client</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="language">언어</label>
+                        <select id="language">
+                            <option value="korean">한국어</option>
+                            <option value="ch">중국어</option>
+                            <option value="en">영어</option>
+                            <option value="japan">일본어</option>
+                            <option value="chinese_cht">중국어(번체)</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label for="device">디바이스</label>
+                        <select id="device">
+                            <option value="cpu">CPU</option>
+                            <option value="cuda">CUDA</option>
+                            <option value="cuda:0">CUDA:0</option>
+                            <option value="mps">MPS (Apple Silicon)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="formula" checked>
+                        <span class="checkmark"></span>
+                        수식 처리
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="table" checked>
+                        <span class="checkmark"></span>
+                        표 처리
+                    </label>
+                </div>
+            </section>
+
+            <!-- 제어 버튼 섹션 -->
+            <section class="control-section">
+                <div class="control-buttons">
+                    <button id="startBtn" class="btn btn-success btn-large">
+                        <i class="fas fa-play"></i> OCR 처리 시작
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger btn-large" disabled>
+                        <i class="fas fa-stop"></i> 중지
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary">
+                        <i class="fas fa-trash"></i> 로그 지우기
+                    </button>
+                    <button id="openOutputBtn" class="btn btn-info" disabled>
+                        <i class="fas fa-external-link-alt"></i> 결과 폴더 열기
+                    </button>
+                </div>
+            </section>
+
+            <!-- 진행상황 섹션 -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-tasks"></i> 처리 진행상황</h2>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">준비 중...</div>
+                </div>
+            </section>
+
+            <!-- 로그 섹션 -->
+            <section class="log-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-terminal"></i> 처리 로그</h2>
+                    <div class="log-controls">
+                        <button id="scrollToBottomBtn" class="btn btn-small">
+                            <i class="fas fa-arrow-down"></i> 맨 아래로
+                        </button>
+                    </div>
+                </div>
+                <div class="log-container">
+                    <div class="log-content" id="logContent">
+                        <div class="log-entry info">
+                            <span class="log-time">[시작]</span>
+                            <span class="log-message">MinerU OCR 도구가 준비되었습니다.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>처리 중...</p>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
