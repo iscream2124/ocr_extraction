@@ -350,9 +350,9 @@ class MinerUWebApp {
     }
 }
 
-// 전역 함수들 정의 (오류 방지용)
+// 전역 함수들 정의 (오류 방지용) - DOM 로드 전에 정의
 window.selectFile = function() {
-    console.log('selectFile 함수 호출됨 (웹 버전)');
+    console.log('전역 selectFile 함수 호출됨 (웹 버전)');
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         fileInput.click();
@@ -362,7 +362,7 @@ window.selectFile = function() {
 };
 
 window.selectFolder = function() {
-    console.log('selectFolder 함수 호출됨 (웹 버전)');
+    console.log('전역 selectFolder 함수 호출됨 (웹 버전)');
     const folderInput = document.getElementById('folderInput');
     if (folderInput) {
         folderInput.click();
@@ -383,9 +383,19 @@ window.validateInputPath = function() {
     return Promise.resolve();
 };
 
+console.log('전역 함수 정의 완료');
+
 // DOM이 로드된 후 앱 초기화
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM 로드 완료, 앱 초기화 시작');
+    console.log('전역 selectFile 함수 확인:', typeof window.selectFile);
+    console.log('전역 selectFolder 함수 확인:', typeof window.selectFolder);
     window.app = new MinerUWebApp();
     console.log('앱 초기화 완료, window.app:', window.app);
+    
+    // 버튼 요소 확인
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const selectFolderBtn = document.getElementById('selectFolderBtn');
+    console.log('selectFileBtn 요소:', selectFileBtn);
+    console.log('selectFolderBtn 요소:', selectFolderBtn);
 });
