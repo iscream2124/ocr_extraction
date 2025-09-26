@@ -400,6 +400,14 @@ class MinerUWebApp {
     console.log('전역 함수 정의 완료');
 })();
 
+// Electron API 사용 방지
+if (typeof window !== 'undefined' && window.require) {
+    console.warn('Electron 환경이 감지되었습니다. 웹 버전에서는 Electron API를 사용할 수 없습니다.');
+    // Electron API를 비활성화
+    window.require = undefined;
+    window.electron = undefined;
+}
+
 // DOM이 로드된 후 앱 초기화
 function initializeApp() {
     console.log('DOM 로드 완료, 앱 초기화 시작');
