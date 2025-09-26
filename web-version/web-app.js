@@ -23,6 +23,17 @@ class MinerUWebApp {
         console.log('File input:', fileInput);
         console.log('Folder input:', folderInput);
         
+        // 요소 존재 여부 확인
+        if (!uploadArea) {
+            console.error('uploadArea 요소를 찾을 수 없습니다!');
+        }
+        if (!fileInput) {
+            console.error('fileInput 요소를 찾을 수 없습니다!');
+        }
+        if (!folderInput) {
+            console.error('folderInput 요소를 찾을 수 없습니다!');
+        }
+        
         if (uploadArea && fileInput) {
             // 클릭 이벤트
             uploadArea.addEventListener('click', (e) => {
@@ -350,52 +361,75 @@ class MinerUWebApp {
     }
 }
 
-// 전역 함수들 정의 (오류 방지용) - DOM 로드 전에 정의
-window.selectFile = function() {
-    console.log('전역 selectFile 함수 호출됨 (웹 버전)');
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) {
-        fileInput.click();
-    } else {
-        console.error('fileInput 요소를 찾을 수 없습니다');
-    }
-};
+// 전역 함수들 정의 (오류 방지용) - 즉시 실행
+(function() {
+    console.log('전역 함수 정의 시작');
+    
+    window.selectFile = function() {
+        console.log('전역 selectFile 함수 호출됨 (웹 버전)');
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            fileInput.click();
+        } else {
+            console.error('fileInput 요소를 찾을 수 없습니다');
+        }
+    };
 
-window.selectFolder = function() {
-    console.log('전역 selectFolder 함수 호출됨 (웹 버전)');
-    const folderInput = document.getElementById('folderInput');
-    if (folderInput) {
-        folderInput.click();
-    } else {
-        console.error('folderInput 요소를 찾을 수 없습니다');
-    }
-};
+    window.selectFolder = function() {
+        console.log('전역 selectFolder 함수 호출됨 (웹 버전)');
+        const folderInput = document.getElementById('folderInput');
+        if (folderInput) {
+            folderInput.click();
+        } else {
+            console.error('folderInput 요소를 찾을 수 없습니다');
+        }
+    };
 
-window.selectOutputDir = function() {
-    console.log('selectOutputDir 함수 호출됨 (웹 버전)');
-    // 웹 버전에서는 출력 폴더 선택을 지원하지 않음
-    alert('웹 버전에서는 출력 폴더 선택을 지원하지 않습니다. 결과는 브라우저에서 다운로드됩니다.');
-};
+    window.selectOutputDir = function() {
+        console.log('selectOutputDir 함수 호출됨 (웹 버전)');
+        // 웹 버전에서는 출력 폴더 선택을 지원하지 않음
+        alert('웹 버전에서는 출력 폴더 선택을 지원하지 않습니다. 결과는 브라우저에서 다운로드됩니다.');
+    };
 
-window.validateInputPath = function() {
-    console.log('validateInputPath 함수 호출됨 (웹 버전)');
-    // 웹 버전에서는 파일 경로 검증이 다르게 처리됨
-    return Promise.resolve();
-};
+    window.validateInputPath = function() {
+        console.log('validateInputPath 함수 호출됨 (웹 버전)');
+        // 웹 버전에서는 파일 경로 검증이 다르게 처리됨
+        return Promise.resolve();
+    };
 
-console.log('전역 함수 정의 완료');
+    console.log('전역 함수 정의 완료');
+})();
 
 // DOM이 로드된 후 앱 초기화
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
     console.log('DOM 로드 완료, 앱 초기화 시작');
     console.log('전역 selectFile 함수 확인:', typeof window.selectFile);
     console.log('전역 selectFolder 함수 확인:', typeof window.selectFolder);
-    window.app = new MinerUWebApp();
-    console.log('앱 초기화 완료, window.app:', window.app);
     
-    // 버튼 요소 확인
-    const selectFileBtn = document.getElementById('selectFileBtn');
-    const selectFolderBtn = document.getElementById('selectFolderBtn');
-    console.log('selectFileBtn 요소:', selectFileBtn);
-    console.log('selectFolderBtn 요소:', selectFolderBtn);
-});
+    try {
+        window.app = new MinerUWebApp();
+        console.log('앱 초기화 완료, window.app:', window.app);
+        
+        // 버튼 요소 확인
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const selectFolderBtn = document.getElementById('selectFolderBtn');
+        console.log('selectFileBtn 요소:', selectFileBtn);
+        console.log('selectFolderBtn 요소:', selectFolderBtn);
+        
+        // 추가 디버깅 정보
+        console.log('업로드 영역 요소:', document.getElementById('uploadArea'));
+        console.log('파일 입력 요소:', document.getElementById('fileInput'));
+        console.log('폴더 입력 요소:', document.getElementById('folderInput'));
+        
+    } catch (error) {
+        console.error('앱 초기화 중 오류 발생:', error);
+    }
+}
+
+// DOM 로드 상태 확인
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM이 이미 로드된 경우
+    initializeApp();
+}
